@@ -13,6 +13,7 @@ e interface web planejadas para a próxima etapa.
 
 - Python 3.14.4
 - Programação Orientada a Objetos (POO)
+- SQLite3 (banco de dados local)
 
 ## Como executar 
 
@@ -40,7 +41,7 @@ e interface web planejadas para a próxima etapa.
 
 ## Próximos passos
 
-- [] Integração com banco de dados SQLite
+- [x] Integração com banco de dados SQLite
 - [] Expansão das funcionalidades: cadastro de médicos e agendamentos
 - [] Interface web com Flask
 
