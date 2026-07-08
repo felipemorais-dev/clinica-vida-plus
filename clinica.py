@@ -1,3 +1,29 @@
+import sqlite3
+
+class Medico:
+    """
+    Representa um médico da clínica.
+    Define os dados que cada médico possui (nome, CRM, especialidade)
+    e os comportamentos associados a ele.
+    """
+    def __init__(self, nome, crm, especialidade):
+        """
+        Inicializa um novo médico associando os atributos
+        nome, CRM, e especialidade ao objeto criado.
+        """
+        self.nome = nome
+        self.crm = crm
+        self.especialidade = especialidade
+
+    def exibir(self):
+        """
+        Exibe os dados do médico formatados.
+        A responsabilidade de formatar a exibição pertence ao próprio 
+        objeto Medico - qualquer alteração no formato é feita aqui, 
+        sem impactar o restante do código. (encapsulamento)
+        """
+        print(f"Nome: {self.nome}\nCRM: {self.crm}\nEspecialidade: {self.especialidade}")
+
 class Paciente:
     """
     Representa um paciente da clínica.
@@ -22,7 +48,6 @@ class Paciente:
         """
         print(f"Nome: {self.nome}\nIdade: {self.idade}\nTelefone: {self.telefone}")
 
-import sqlite3
 class Clinica:
     """
     Representa o sistema de gestão da clínica.
@@ -37,6 +62,7 @@ class Clinica:
         """
         self.conexao = sqlite3.connect("clinica.db")
         self.cursor = self.conexao.cursor()
+        self.cursor.execute("PRAGMA foreign_keys = ON")
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS pacientes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,7 +71,72 @@ class Clinica:
                 telefone TEXT NOT NULL
             )                
         """)
+
+        self.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS medicos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome TEXT NOT NULL,
+                crm TEXT NOT NULL,
+                especialidade TEXT NOT NULL
+            )
+        """)
+
+        self.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS agendamento (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                data TEXT NOT NULL,
+                horario TEXT NOT NULL,
+                paciente_id INTEGER NOT NULL,
+                medico_id INTEGER NOT NULL,
+                status TEXT NOT NULL,
+                FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
+                FOREIGN KEY (medico_id) REFERENCES medicos(id)
+            )
+        """)
         self.conexao.commit()
+
+    def cadastrar_medico(self, medico):
+        """
+        Recebe um objeto Medico e o insere no banco de dados.
+        Separado da coleta de dados para permitir que o cadastro
+        seja acionado por diferentes fontes no futuro.
+        (input do usuário, arquivos e API).
+        """
+        self.cursor.execute("""
+        INSERT INTO medicos (nome, crm, especialidade)
+        VALUES (?, ?, ?)""", (medico.nome, medico.crm, medico.especialidade))
+        self.conexao.commit()
+        print("Médico cadastrado com sucesso!")
+
+    def listar_medicos(self):
+        """
+        Consulta todos os médicos cadastrados no banco de dados, 
+        e exibe os registros enumerados a partir do índice 1,
+        sem aplicar nenhum filtro. 
+       """
+        self.cursor.execute("SELECT * FROM medicos")
+        medicos =self.cursor.fetchall()
+        if len(medicos) == 0:
+            print("Nenhum médico encontrado.")
+            return
+        
+        print("\n===== LISTA DE MÉDICOS =====\n")
+        for i, p in enumerate (medicos, start=1):
+            print(f"{i}. {p[1]} | CRM: {p[2]} | {p[3]}")
+
+    def coletar_e_cadastrar_medico(self):
+        """
+        Coleta os dados do médico via input e aciona o cadastro.
+        Separado do método cadastrar_medico para isolar a responsabilidade
+        de coleta de dados da responsabilidade de persistência -
+        facilitando futuras integrações com banco de dados 
+        """
+        nome = input("Nome do médico: ")
+        crm = input("CRM: ")
+        especialidade = input("Especialidade: ")
+
+        medico = Medico(nome, crm, especialidade)
+        self.cadastrar_medico(medico)
 
     def cadastrar_pacientes(self, paciente):
         """
@@ -157,7 +248,9 @@ while True:
     print("2. Ver estatísticas")
     print("3. Buscar paciente")
     print("4. Listar todos os pacientes")
-    print("5. Sair")
+    print("5. Cadastrar médico")
+    print("6. Listar médicos")
+    print("7. Sair")
 
     opcao = input("Escolha uma opção: ")
 
@@ -170,6 +263,10 @@ while True:
     elif opcao == "4":
         clinica.listar_pacientes()
     elif opcao == "5":
+        clinica.coletar_e_cadastrar_medico()
+    elif opcao == "6":
+        clinica.listar_medicos()
+    elif opcao == "7":
         clinica.fechar_conexao()
         print("Encerrando o sistema...")
         break
