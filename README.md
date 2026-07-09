@@ -32,6 +32,10 @@ e interface web planejadas para a próxima etapa.
 - Listagem de todos os pacientes cadastrados
 - Busca de paciente por nome (parcial e sem distinção de maiúsculas)
 - Estatísticas: total de pacientes, média de idade, mais novo e mais velho
+- Cadastro de médicos (nome, CRM, especialidade)
+- Listagem de médicos cadastrados
+- Agendamento de consultas vinculando paciente e médico
+- Listagem de agendamentos com nome do paciente e do médico
 
 ## Estrutura do projeto
 
@@ -42,7 +46,7 @@ e interface web planejadas para a próxima etapa.
 ## Próximos passos
 
 - [x] Integração com banco de dados SQLite
-- [] Expansão das funcionalidades: cadastro de médicos e agendamentos
+- [x] Expansão das funcionalidades: cadastro de médicos e agendamentos
 - [] Interface web com Flask
 
 ## Autor

@@ -82,7 +82,7 @@ class Clinica:
         """)
 
         self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS agendamento (
+            CREATE TABLE IF NOT EXISTS agendamentos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 data TEXT NOT NULL,
                 horario TEXT NOT NULL,
@@ -169,7 +169,6 @@ class Clinica:
         paciente = Paciente(nome, idade, telefone)
         self.cadastrar_pacientes(paciente)
         
-
     def ver_estatisticas(self):
         """
         Consulta o banco de dados e calcula estatísticas dos pacientes:
@@ -227,6 +226,66 @@ class Clinica:
         for i, p in enumerate(pacientes, start=1):
             print(f"{i}. {p[1]} | {p[2]} anos | {p[3]}") 
 
+    def cadastrar_agendamento(self, paciente_id, medico_id, data, horario):
+        """
+        Insere um novo agendamento no banco de dados 
+        viculando paciente e médico pelos seus IDs.
+        """
+        self.cursor.execute("""
+            INSERT INTO agendamentos (data, horario, paciente_id, medico_id, status)
+            VALUES (?, ?, ?, ?, ?)
+        """, (data, horario, paciente_id, medico_id, "agendado"))
+        self.conexao.commit()
+        print("Agendamento realizado com sucesso!")
+
+    def coletar_e_cadastrar_agendamento(self):
+        """
+        Lista pacientes e médicos disponíveis, coleta os IDs escolhidos
+        pelo usuário, data e horário, e aciona o cadastro do agendamento.
+        Separado do método cadastrar_agendamento para isolar a responsabilidade
+        de coleta de dados da responsabilidade de persistência.
+        """
+        self.listar_pacientes()
+        self.listar_medicos()
+        try:
+            paciente_id = int(input("\nDigite o ID do paciente: "))
+            medico_id = int(input("\nDigite o ID do médico: "))
+        except ValueError:
+            print("ID inválido. Digite apenas números.")
+            return
+        data = input("\nDigite a data (DD/MM/AAAA): ")
+        horario = input("\nDigite o horário (HH:MM): ")
+        
+        self.cadastrar_agendamento(paciente_id, medico_id, data, horario)
+        
+    def listar_agendamentos(self):
+        """
+        Consulta todos os agendamentos no banco de dados utilizando o JOIN
+        para trazer o nome do paciente e do médico vinculados.
+        Exibe os registros enumerados a partir do índice 1.
+        """
+        self.cursor.execute("""
+        SELECT
+            agendamentos.id,
+            pacientes.nome,
+            medicos.nome,
+            agendamentos.data,
+            agendamentos.horario,
+            agendamentos.status
+            FROM agendamentos 
+        JOIN pacientes ON agendamentos.paciente_id = pacientes.id 
+        JOIN medicos ON agendamentos.medico_id = medicos.id
+        """)
+
+        agendamentos = self.cursor.fetchall()
+        if len(agendamentos) == 0:
+            print("Nenhum agendamento encontrado.")
+            return
+        
+        print("\n===== AGENDAMENTOS =====\n")
+        for i, p in enumerate(agendamentos, start=1):
+            print(f"{i}. Paciente: {p[1]} | Médico: {p[2]} | Data: {p[3]} | Horário: {p[4]} | Status: {p[5]} ")
+
     def fechar_conexao(self):
         """
         Encerra a conexão com o banco de dados.
@@ -250,7 +309,9 @@ while True:
     print("4. Listar todos os pacientes")
     print("5. Cadastrar médico")
     print("6. Listar médicos")
-    print("7. Sair")
+    print("7. Agendar consulta")
+    print("8. Listar agendamentos")
+    print("9. Sair")
 
     opcao = input("Escolha uma opção: ")
 
@@ -267,6 +328,10 @@ while True:
     elif opcao == "6":
         clinica.listar_medicos()
     elif opcao == "7":
+        clinica.coletar_e_cadastrar_agendamento()
+    elif opcao == "8":
+        clinica.listar_agendamentos()
+    elif opcao == "9":
         clinica.fechar_conexao()
         print("Encerrando o sistema...")
         break
